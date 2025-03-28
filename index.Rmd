@@ -1,0 +1,223 @@
+---
+title: "Opioid Mortality & Social Vulnerability in Georgia (2020)"
+author: "Hayoung Jung"
+output: 
+  flexdashboard::flex_dashboard:
+    theme:
+      bootswatch: flatly
+      version: 3
+    base_font:
+    google: Roboto
+    orientation: columns
+    vertical_layout: fill
+    
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(highcharter)
+library(plotly)
+library(viridisLite)
+library(sf)
+
+# Import Data
+dat <- readRDS(here::here("ga_opioid_data.rds"))
+
+ga_data <- dat |>
+  mutate(`hc-key` = paste0("us-ga-", substr(FIPS, 3, 5)))
+```
+
+Column {data-width=314}
+-----------------------------------------------------------------------
+### County-Level Opioid Mortality Rates
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Mortality Rate",
+      value = "mort_rate20",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  #hc_title(text = "Mortality Rates by County in Georiga (2020)") |>
+  hc_colorAxis(
+    stops = color_stops(colors = rev(viridisLite::viridis(10))),
+    style = "conti",
+    min = 0, max = 0.34) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Mortality Rate:</b> {point.value:.3f}<br>",
+      "<b>Population:</b> {point.population}")) |>
+  hc_caption(
+    text = "per 1,000 population",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> Opioid mortality rates vary across Georgia's counties. In 2020, **Clay** county had the highest mortality rate at 0.338 per 1,000, followed by Talbot (0.320), Ware (0.307), Randolph (0.283), and Haralson (0.273) counties. However, due to population sizes and spatial relationships between counties, these values may not accurately represent the true mortality rates.
+
+Column {data-width=314}
+-----------------------------------------------------------------------
+### County-Level Smoothed Opioid Mortality Rates
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Smoothed Mortality Rate",
+      value = "mort_rate20_smth",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  #hc_title(text = "Smoothed Mortality Rates by County in Georiga (2020)") |>
+  hc_colorAxis(
+    stops = color_stops(colors = rev(viridisLite::viridis(10))),
+    style = "conti",
+    min = 0, max = 0.34) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Smoothed Mortality Rate:</b> {point.value:.3f}<br>",
+      "<b>Population:</b> {point.population}")) |>
+  hc_caption(
+    text = "per 1,000 population",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> To account for variations and spatial dependencies between counties, a Conditional Autoregressive (CAR) model was applied to smooth the mortality rates. After smoothing, **Haralson** county now has the highest adjusted mortality rate (0.218 per 1,000), followed by Dade (0.206), Rabun (0.203), Polk (0.186), and Richmond (0.183) counties.
+
+
+Column {data-width=372 .tabset}
+-----------------------------------------------------------------------
+### SES
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Socioeconomic Status",
+      value = "RPL_THEME1",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  hc_title(text = "Socioeconomic Status",
+           style = list(fontSize = "18px",
+                        fontFamily = "Lato",
+                        fontWeight = "bold")) |>
+  hc_colorAxis(stops = list(
+    list(0, "#d4efdf"),
+    list(0.5, "#27ae60"),
+    list(1, "#145a32")), 
+    min = 0, max = 1) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Socioeconomic Status:</b> {point.value:.3f}<br>")) |>
+  hc_caption(
+    text = "percentile ranking (0-1)",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> **Higher Social Vulnerability Index scores indicate greater vulnerability and a higher need for resources and support.**<br>Higher socioeconomic status appears to be more concentrated in the southern parts of the state, while lower status is more prevalent in many northern and central counties. This pattern may reflect differences in economic development, infrastructure, and resource distribution across the state.
+
+### Household
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Household Characteristics",
+      value = "RPL_THEME2",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  hc_title(text = "Household Characteristics",
+           style = list(fontSize = "18px",
+                        fontFamily = "Lato",
+                        fontWeight = "bold")) |>
+  hc_colorAxis(stops = list(
+    list(0, "#ffe0b2"),
+    list(0.5, "#ff9800"),
+    list(1, "#e65100")),
+  min = 0, max = 1) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Household Characteristics:</b> {point.value:.3f}<br>")) |>
+  hc_caption(
+    text = "percentile ranking (0-1)",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> Household characteristic values tend to be higher in the southern and southwestern parts of the state, whereas lower values are more concentrated in northern and central counties. This pattern may be influenced by regional differences in household composition, income levels, housing stability, and family structures.
+
+### Minority Status
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Racial & Ethnic Minority Status",
+      value = "RPL_THEME3",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  hc_title(text = "Racial & Ethnic Minority Status",
+           style = list(fontSize = "18px",
+                        fontFamily = "Lato",
+                        fontWeight = "bold")) |>
+  hc_colorAxis(stops = list(
+    list(0, "#e1bee7"),
+    list(0.5, "#9c27b0"),
+    list(1, "#4a148c")),
+  min = 0, max = 1) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Racial & Ethnic Minority Status:</b> {point.value:.3f}<br>")) |>
+  hc_caption(
+    text = "percentile ranking (0-1)",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> Minority populations are predominantly concentrated in the southwestern and central parts of the state, as well as in some eastern counties. In contrast, northern and rural areas have lower minority representation. This distribution likely reflects historical settlement patterns, migration trends, and demographic shifts over time.
+
+### Housing/Transport
+```{r}
+hcmap("countries/us/us-ga-all", 
+      data = ga_data,
+      name = "Housing Type & Transportation",
+      value = "RPL_THEME4",
+      borderWidth = 0,
+      nullColor = "#d3d3d3",
+      joinBy = c("hc-key", "hc-key"),
+      showInLegend = FALSE) |>
+  hc_title(text = "Housing Type & Transportation",
+           style = list(fontSize = "18px",
+                        fontFamily = "Lato",
+                        fontWeight = "bold")) |>
+  hc_colorAxis(stops = list(
+    list(0, "#bbdefb"),
+    list(0.5, "#2196f3"),
+    list(1, "#0d47a1")),
+  min = 0, max = 1) |>
+  hc_mapNavigation(enabled = TRUE) |>
+  hc_tooltip(
+    useHTML = TRUE,
+    pointFormat = paste(
+      "<b>County:</b> {point.NAME}<br>",
+      "<b>Housing Type & Transportation:</b> {point.value:.3f}<br>")) |>
+  hc_caption(
+    text = "percentile ranking (0-1)",
+    style = list(fontSize = "10px", color = "gray"))
+```
+
+> Higher values are primarily found in the central, southeastern, and southwestern regions, while northern and rural areas tend to have lower values. This pattern maybe linked to differences in housing density, public transportation availability, and commuting patterns accross the state.
+
