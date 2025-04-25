@@ -10,6 +10,7 @@ output:
     google: Roboto
     orientation: columns
     vertical_layout: fill
+    source_code: https://github.com/ha-young-jung/DATA555
     
 ---
 
@@ -28,6 +29,8 @@ ga_data <- dat |>
   mutate(`hc-key` = paste0("us-ga-", substr(FIPS, 3, 5)))
 ```
 
+Dashboard
+=======================================================================
 Column {data-width=314}
 -----------------------------------------------------------------------
 ### County-Level Opioid Mortality Rates
@@ -220,4 +223,29 @@ hcmap("countries/us/us-ga-all",
 ```
 
 > Higher values are primarily found in the central, southeastern, and southwestern regions, while northern and rural areas tend to have lower values. This pattern maybe linked to differences in housing density, public transportation availability, and commuting patterns accross the state.
+
+About
+=======================================================================
+County-level data on opioid-involved overdose deaths for 2020 were obtained from the Georgia Department of Public Health.  
+Retrieved October 15, 2024. https://dph.georgia.gov/epidemiology/drug-surveillance.  
+<ul>
+  <li>
+These data were derived from DPH Vital Records death certificates and include deaths that occurred both within and outside the state among Georgia residents.
+ </li>
+</ul>
+
+Social Vulnerability Index (SVI) data were obtained from the Centers for Disease Control and Prevention (CDC).  
+Retrieved October 15, 2024. https://www.atsdr.cdc.gov/place-health/php/svi/index.html.  
+<ul>
+  <li>
+The SVI consists of four themes: socioeconomic status, household characteristics, racial and ethnic minority status, and housing
+type and transportation, within which 16 social attributes are grouped. For each theme, the percentile ranks of the component attributes were summed to create a theme-specific percentile ranking at the U.S. census tract level. These rankings range from 0 to 1, with higher values indicating greater vulnerability.
+  </li>
+</ul>
+
+<hr>
+<div style="position: absolute; bottom: 0; width: 100%; text-align: center; font-size: 14px; color: #143e66;">
+ **Importance of this Project**  
+ By visualizing patterns in opioid-related mortality and social vulnerability, this dashboard offers insights into high-risk areas shaped by social and structural determinants of health.
+</div>
 
